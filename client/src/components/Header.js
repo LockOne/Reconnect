@@ -57,8 +57,13 @@ class Header extends Component {
                                 </Nav>
                                 <Nav navbar>
                                     <NavItem>
-                                        <Button outline onClick={this.toggleModal}>
-                                            <span className="fa fa-sign-in fa-lg"></span> Login
+                                        <Button outline onClick={this.toggleModal} style={{borderColor: "transparent"}}>
+                                            <span className="fa fa-sign-in fa-lg" ></span> Login
+                                        </Button>
+                                    </NavItem>
+                                    <NavItem>
+                                    <Button outline onClick={this.toggleModal} style={{ borderColor: "transparent" }}>
+                                            <span className="fa fa-user-plus fa-lg"></span> Register
                                         </Button>
                                     </NavItem>
                                 </Nav>
