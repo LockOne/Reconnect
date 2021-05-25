@@ -6,20 +6,31 @@ class Header extends Component {
         super(props);
         this.state = {
             isNavOpen: false,
-            isModalOpen: false
+            isModalLoginOpen: false,
+            isModalRegisterOpen: false
         }
         this.toggleNav = this.toggleNav.bind(this);
-        this.toggleModal = this.toggleModal.bind(this);
+        this.toggleLoginModal = this.toggleLoginModal.bind(this);
+        this.toggleRegisterModal = this.toggleRegisterModal.bind(this);
         this.handleLogin = this.handleLogin.bind(this);
+        this.handleRegister = this.handleRegister.bind(this);
     }
     toggleNav() {
         this.setState({ isNavOpen: !this.state.isNavOpen });
     }
-    toggleModal() {
-        this.setState({ isModalOpen: !this.state.isModalOpen });
+    toggleLoginModal() {
+        this.setState({ isModalLoginOpen: !this.state.isModalLoginOpen });
+    }
+    toggleRegisterModal() {
+        this.setState({ isModalRegisterOpen: !this.state.isModalRegisterOpen });
     }
     handleLogin(e) {
-        this.toggleModal();
+        this.toggleLoginModal();
+        alert("Username: " + this.username.value + " Password: " + this.password.value + " Remember me: " + this.remember.value);
+        e.preventDefault();
+    }
+    handleRegister(e) {
+        this.toggleRegisterModal();
         alert("Username: " + this.username.value + " Password: " + this.password.value + " Remember me: " + this.remember.value);
         e.preventDefault();
     }
@@ -57,12 +68,12 @@ class Header extends Component {
                                 </Nav>
                                 <Nav navbar>
                                     <NavItem>
-                                        <Button outline onClick={this.toggleModal} style={{borderColor: "transparent"}}>
+                                        <Button outline onClick={this.toggleLoginModal} style={{borderColor: "transparent", boxShadow: "none"}}>
                                             <span className="fa fa-sign-in fa-lg" ></span> Login
                                         </Button>
                                     </NavItem>
                                     <NavItem>
-                                    <Button outline onClick={this.toggleModal} style={{ borderColor: "transparent" }}>
+                                    <Button outline onClick={this.toggleRegisterModal} style={{ borderColor: "transparent", boxShadow: "none" }}>
                                             <span className="fa fa-user-plus fa-lg"></span> Register
                                         </Button>
                                     </NavItem>
@@ -80,8 +91,8 @@ class Header extends Component {
                     <Button color="primary">Learn More</Button>
                     </p>
                 </Jumbotron>
-                <Modal isOpen={ this.state.isModalOpen } toggle={this.toggleModal}>
-                    <ModalHeader toggle={this.toggleModal}>Login</ModalHeader>
+                <Modal isOpen={ this.state.isModalLoginOpen } toggle={this.toggleLoginModal}>
+                    <ModalHeader toggle={this.toggleLoginModal}>Login</ModalHeader>
                     <ModalBody>
                         <Form onSubmit={this.handleLogin}>
                             <FormGroup className="m-3">
@@ -103,6 +114,31 @@ class Header extends Component {
                         </Form>
                     </ModalBody>
                 </Modal>
+
+                <Modal isOpen={ this.state.isModalRegisterOpen } toggle={this.toggleRegisterModal}>
+                    <ModalHeader toggle={this.toggleRegisterModal}>Register</ModalHeader>
+                    <ModalBody>
+                        <Form onSubmit={this.handleRegister}>
+                            <FormGroup className="m-3">
+                                <Label htmlFor="username">Username</Label>
+                                <Input type="text" id="username" name="username" innerRef={ (input) => this.username = input}/>
+                            </FormGroup>
+                            <FormGroup className="m-3">
+                                <Label htmlFor="password">Password</Label>
+                                <Input type="password" id="password" name="password" innerRef={(input) => this.password = input}/>
+                            </FormGroup>
+                            <FormGroup className="m-3" check>
+                                <Label check>
+                                    <Input type="checkbox" name="remember" innerRef={ (input) => this.remember = input }/> Remember me
+                                </Label>
+                            </FormGroup>
+                            <div className="text-center">
+                                <Button type="submit" className="primary">Register</Button>
+                                </div>
+                        </Form>
+                    </ModalBody>
+                </Modal>
+                
             </React.Fragment>
         )
     }
