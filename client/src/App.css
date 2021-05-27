@@ -45,3 +45,12 @@ address {
 h6 {
   color: #707070;
 }
+
+.buttons {
+  width: 80px;
+}
+
+.classImg {
+  height: 140px;
+  width: auto;
+}

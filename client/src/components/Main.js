@@ -4,6 +4,7 @@ import { Route, Switch, Redirect, withRouter } from "react-router-dom";
 import Header from "./Header";
 import Class from "./Class";
 import Home from "./Home";
+import ClassDetail from "./ClassDetail";
 
 const CLASSES =
     [
@@ -56,13 +57,19 @@ class Main extends Component {
 
   }
   render() {
+    const ClassWithId = ({ match }) => {
+      return (
+        <ClassDetail c={CLASSES.filter(cl => cl.id === parseInt(match.params.id, 10))[0]}/>
+      )
+    }
     return (
         
           <div>
             <Header />
             <Switch>
-              <Route path="/classes" component={() => <Class classes={CLASSES} />} />
+              <Route exact path="/classes" component={() => <Class classes={CLASSES} />} />
               <Route path="/home" component={Home}></Route>
+              <Route exact path="/classes/:id" component={ClassWithId}></Route>
             </Switch>
           </div>
     );
