@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=640, initial-scale=1"/>
+	<title>Streaming</title>
+	<style type="text/css">
+		body {
+			background: black;
+			text-align: center;
+			margin-top: 10%;
+		}
+		#videoCanvas {
+			background: red;
+			width: 640px;
+			height: 480px;
+		}
+		.centered {
+			position: absolute;
+			top : 50%;
+			left: 50%;
+			color: white;
+			transform: translate(-50%, -50%);
+		}
+	</style>
+</head>
+<body>
+	<div id="container1">
+		<img id="videoimg" width="640" height="480" >
+		<div id="loadingtxt" class="centered" > Loading </div>
+		</img>	
+		<button id="streambutton" onclick="stream()">
+			stream
+		</button>
+		<button id="connectbutton" onclick="connect()">
+			try connect
+		</button>
+	</div>
+	<div id="container2">
+		<video autoplay="true" id = "selfcam" width="640" height="480">
+
+		</video>
+	</div>
+	<script src="public/jsmpg.js"></script>
+	<script src="public/require.js"></script>
+	<script type="text/javascript">
+	
+	//Show self cam
+	{
+		var video = document.querySelector("#selfcam");
+
+		if (navigator.mediaDevices.getUserMedia) {
+		navigator.mediaDevices.getUserMedia({ video: true })
+			.then(function (stream) {
+			video.srcObject = stream;
+			})
+			.catch(function (err0r) {
+			console.log("Something went wrong!");
+			});
+		}
+	}
+
+
+	function connect() {
+		const img = document.querySelector("#videoimg");
+
+        const WSS_URL = "wss://tester2.kaist.ac.kr:2443";
+		const wss = new WebSocket(WSS_URL);
+
+		wss.onopen = () => {
+			wss.send(0);
+			console.log("client: Connected to " + WSS_URL);
+		}
+
+		wss.onmessage = message => {
+			img.src = message.data;
+		}
+		wss.onerror = function(event) {
+			console.log("connect: Server error, ", event.data);
+		}
+
+		var loadingtxt = document.getElementById("loadingtxt");
+		if (loadingtxt != null) {
+			loadingtxt.parentNode.removeChild(loadingtxt);
+		}
+	}
+
+	function stream() {
+		const video = document.querySelector("#selfcam");
+
+		const getFrame = () => {
+			const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const data = canvas.toDataURL('image/jpeg', 0.7);
+            return data;
+		}
+
+		console.log("frame size : ("+ video.videoWidth + "X" + video.videoHeight + ")");
+
+		const WSS_URL = "wss://tester2.kaist.ac.kr:2443";
+		const FPS = 60;
+		const wss = new WebSocket(WSS_URL);
+
+		var intervalID = undefined;
+
+		wss.onopen = () => {
+			console.log("Stream: Connected to " + WSS_URL);
+			wss.send(1);
+			intervalID = setInterval( () => {
+				wss.send(getFrame());
+			}, 1000 / FPS);
+		}
+
+		wss.onerror = function(event) {
+			console.log("stream: Server error, ", event);
+		}
+
+		wss.onclose = () => {
+			console.log("Server disconnected");
+			if (intervalID != undefined) {
+				clearInterval(intervalID);
+				intervalID = undefined;
+			}
+		}
+	}
+
+	</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "webcam_stream",
+  "version": "1.0.0",
+  "description": "Access and stream web camera in nodejs using websockets.",
+  "main": "index.js",
+  "scripts": {
+    "main": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "homepage": "",
+  "dependencies": {
+    "express": "^4.17.1",
+    "https": "^1.0.0",
+    "requirejs": "^2.3.6",
+    "wss": "^3.3.4"
+  }
+}
