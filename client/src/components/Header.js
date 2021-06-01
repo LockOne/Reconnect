@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { Navbar, NavbarBrand, Jumbotron, NavbarToggler, Nav, Collapse, NavItem, Button, Modal, ModalHeader, ModalBody, Form, FormGroup, Label, Input } from 'reactstrap';
 import { NavLink } from 'react-router-dom';
+import axios from 'axios';
+
 class Header extends Component {
     constructor(props) {
         super(props);
@@ -30,10 +32,64 @@ class Header extends Component {
         e.preventDefault();
     }
     handleRegister(e) {
+
+        console.log(this);
+
+        var param = {};
+        param.userid = this.username.value;
+        param.password = this.password.value;
+        param.usertype = this.usertype.value;
+        alert("client register");
+        console.log(param);
+
+        fetch(
+            "https://tester2.kaist.ac.kr:2443/register",
+            {method: "POST",
+             body : JSON.stringify(param),            
+            headers: {
+                'Content-Type': 'application/json'
+            }})
+            .then((response) => {
+                console.log("get res: ");
+                console.log(response);
+                alert("register done");
+            })
+            .catch((error) => {
+                console.log("error : ");
+                console.log(error);
+            });
+
+
+        /*
+        axios.post({
+          method : "post",
+          url: 'https://tester2.kaist.ac.kr:2443/register',
+          param})
+        .then((response) => {
+            console.log("text");
+            console.log(response);
+            console.log(postrequest);
+            alert("register done");
+        })
+        .catch((error) => {
+            console.log("error ");
+            console.log(error);
+        });*/
+
+        
+
+        /*
+        $.ajax({
+            url: "/register", data: param, type: 'POST', dataType: "JSON",
+            success: function (result) {
+                alert(result.msg);
+            }
+        });
+        */
         this.toggleRegisterModal();
-        alert("Username: " + this.username.value + " Password: " + this.password.value + " Remember me: " + this.remember.value);
         e.preventDefault();
     }
+
     render() {
         return (
             <React.Fragment>
@@ -109,14 +165,17 @@ class Header extends Component {
                                 <Label htmlFor="password">Password</Label>
                                 <Input type="password" id="password" name="password" innerRef={(input) => this.password = input}/>
                             </FormGroup>
-                            <FormGroup className="m-3" check>
-                                <Label check>
-                                    <Input type="checkbox" name="remember" innerRef={ (input) => this.remember = input }/> Remember me
-                                </Label>
+                            <FormGroup className="m-3">
+                                <Label htmlFor="usertype">User type</Label>
+                                <Input type="select" name="usertype" id="usertype" innerRef={(input) => this.usertype = input}>
+                                    <option>Student</option>
+                                    <option>Professor</option>
+                                    <option>Teaching assistant</option>
+                                </Input>
                             </FormGroup>
                             <div className="text-center">
                                 <Button type="submit" className="primary">Register</Button>
-                                </div>
+                            </div>
                         </Form>
                     </ModalBody>
                 </Modal>

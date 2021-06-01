@@ -1,0 +1,21 @@
+{
+  "name": "reconnect",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "concurrently": "^6.2.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "mariadb": "^2.5.3",
+    "mongoose": "^5.12.12",
+    "nodemon": "^2.0.7",
+    "pbkdf2-password": "^1.2.1",
+    "wss": "^3.3.4"
+  },
+  "scripts": {
+    "client": "yarn --cwd client run serve",
+    "server": "node index.js",
+    "start": "concurrently \"yarn run server\" \"yarn run client\""
+  }
+}
