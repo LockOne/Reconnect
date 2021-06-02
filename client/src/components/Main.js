@@ -63,13 +63,14 @@ class Main extends Component {
       )
     }
     return (
+        
           <div>
             <Header />
             <Switch>
-              <Route path="/" component={Home}></Route>
               <Route exact path="/classes" component={() => <Class classes={CLASSES} />} />
-              <Route path="/home" component={Home}></Route>
-              <Route exact path="/classes/:id" component={ClassWithId}></Route>
+              <Route path="/home" component={Home}/>
+              <Route exact path="/classes/:id" component={ClassWithId}/>
+              <Redirect to="/home"/>
             </Switch>
           </div>
     );
