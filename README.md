@@ -22,5 +22,5 @@ TODO :
 1. joining a lecture
 
 (low priority)
-3. Adding a lecture
-4. Adding a notice
+1. Adding a lecture
+1. Adding a notice
