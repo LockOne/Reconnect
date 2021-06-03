@@ -9,7 +9,6 @@ If you want to run client page router
 If you want to run login process
 `yarn run server`
 
-
 TODO : 
 (essential)
 1. log in
@@ -20,6 +19,7 @@ TODO :
    1. chat room
    1. participation score
 1. opening a webcast (+ closing)
+1. joining a lecture
 
 (low priority)
 3. Adding a lecture
