@@ -15,6 +15,7 @@ TODO :
 1. webcast UI
    1. webcam
    1. screen share 
+   1. voice
    1. subtitle 
    1. chat room
    1. participation score
