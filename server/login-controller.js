@@ -3,12 +3,8 @@ var service_main = require("./login-service");
 //login/signin
 exports.SignIn = async function(req,res){
     //console.log( req.body);
-    var result = await service_main.SignIn(req); if(result.code ==0) {
-        res.cookie('userid', result.data.userid);
-        res.cookie('usertype', result.data.usertype);
-        // save in server-side session
-        // req.session.user = result;
-    } return result;
+    var result = await service_main.SignIn(req);
+    return result;
 };
 
 // register

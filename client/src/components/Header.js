@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { Navbar, NavbarBrand, Jumbotron, NavbarToggler, Nav, Collapse, NavItem, Button, Modal, ModalHeader, ModalBody, Form, FormGroup, Label, Input } from 'reactstrap';
-import { NavLink } from 'react-router-dom';
-import axios from 'axios';
+import { NavLink, Redirect } from 'react-router-dom';
 
 class Header extends Component {
     constructor(props) {
@@ -9,13 +8,37 @@ class Header extends Component {
         this.state = {
             isNavOpen: false,
             isModalLoginOpen: false,
-            isModalRegisterOpen: false
+            isModalRegisterOpen: false,
+            isNavBarHidden : false
         }
         this.toggleNav = this.toggleNav.bind(this);
         this.toggleLoginModal = this.toggleLoginModal.bind(this);
         this.toggleRegisterModal = this.toggleRegisterModal.bind(this);
         this.handleLogin = this.handleLogin.bind(this);
         this.handleRegister = this.handleRegister.bind(this);
+        this.handleLoad = this.handleLoad.bind(this);
+    }
+
+    componentDidMount() {
+        window.addEventListener('load', this.handleLoad);
+     }
+    
+    componentWillUnmount() { 
+        window.removeEventListener('load', this.handleLoad)  
+    }
+
+    handleLoad() {
+        var nameEQ = "userid=";
+        var ca = document.cookie.split(';');
+        for(var i=0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0)==' ') c = c.substring(1,c.length);
+            if (c.indexOf(nameEQ) == 0) {
+                console.log("logined, ", c);
+                this.setState({ isNavBarHidden: true });
+                break;
+            }
+        }
     }
     toggleNav() {
         this.setState({ isNavOpen: !this.state.isNavOpen });
@@ -28,7 +51,35 @@ class Header extends Component {
     }
     handleLogin(e) {
         this.toggleLoginModal();
-        alert("Username: " + this.username.value + " Password: " + this.password.value + " Remember me: " + this.remember.value);
+
+        var param = {};
+        param.userid = this.username.value;
+        param.password = this.password.value;
+
+        fetch(
+            "https://tester2.kaist.ac.kr:2443/login",
+            {method: "POST",
+             body : JSON.stringify(param),
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        })
+            .then((response) => {
+                console.log("res1 : ", response);
+                response.json().then(json => {
+                    console.log("json2 :", json);
+                    alert(json.msg);
+                    if (json.code == 0) {
+                        this.setState({ isNavBarHidden: true });
+                        document.cookie = "userid=" + json.userid + ";path=/";
+                    }
+                });
+            })
+            .catch((error) => {
+                console.log("error : ");
+                console.log(error);
+            });
+
         e.preventDefault();
     }
     handleRegister(e) {
@@ -50,42 +101,17 @@ class Header extends Component {
                 'Content-Type': 'application/json'
             }})
             .then((response) => {
-                console.log("get res: ");
-                console.log(response);
-                alert("register done");
+                response.json().then(json => {
+                    console.log("json2 :", json);
+                    alert(json.msg);
+                })
+                //alert("register done");
             })
             .catch((error) => {
                 console.log("error : ");
                 console.log(error);
             });
 
-
-        /*
-        axios.post({
-          method : "post",
-          url: 'https://tester2.kaist.ac.kr:2443/register',
-          param})
-        .then((response) => {
-            console.log("text");
-            console.log(response);
-            console.log(postrequest);
-            alert("register done");
-        })
-        .catch((error) => {
-            console.log("error ");
-            console.log(error);
-        });*/
-
-        
-
-        /*
-        $.ajax({
-            url: "/register", data: param, type: 'POST', dataType: "JSON",
-            success: function (result) {
-                alert(result.msg);
-            }
-        });
-        */
         this.toggleRegisterModal();
         e.preventDefault();
     }
@@ -112,6 +138,7 @@ class Header extends Component {
                                         </NavLink>
                                     </NavItem>
                                 </Nav>
+                                { (this.state.isNavBarHidden) ? null : 
                                 <Nav navbar>
                                     <NavItem>
                                         <Button outline onClick={this.toggleLoginModal} style={{borderColor: "transparent", boxShadow: "none"}}>
@@ -119,11 +146,12 @@ class Header extends Component {
                                         </Button>
                                     </NavItem>
                                     <NavItem>
-                                    <Button outline onClick={this.toggleRegisterModal} style={{ borderColor: "transparent", boxShadow: "none" }}>
+                                        <Button outline onClick={this.toggleRegisterModal} style={{ borderColor: "transparent", boxShadow: "none" }}>
                                             <span className="fa fa-user-plus fa-lg"></span> Register
                                         </Button>
                                     </NavItem>
                                 </Nav>
+                                }
                                 
                             </Collapse>
                         </div>

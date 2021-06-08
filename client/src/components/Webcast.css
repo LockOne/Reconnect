@@ -1,0 +1,22 @@
+.big1 {
+    width : 800;
+    height : 600;
+}
+
+.big2 {
+    width : 400;
+    height : 600;
+}
+
+.small1 {
+    width : 400;
+    height : 300;
+}
+
+.subtitle {
+    position: absolute;
+    bottom : 0;
+    background-color: black;
+    height: 60;
+    width: 1200;
+}
