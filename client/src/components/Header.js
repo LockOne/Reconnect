@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { Navbar, NavbarBrand, Jumbotron, NavbarToggler, Nav, Collapse, NavItem, Button, Modal, ModalHeader, ModalBody, Form, FormGroup, Label, Input } from 'reactstrap';
 import { NavLink, Redirect } from 'react-router-dom';
-
 class Header extends Component {
     constructor(props) {
         super(props);
@@ -17,6 +16,7 @@ class Header extends Component {
         this.handleLogin = this.handleLogin.bind(this);
         this.handleRegister = this.handleRegister.bind(this);
         this.handleLoad = this.handleLoad.bind(this);
+        this.logout = this.logout.bind(this);
     }
 
     componentDidMount() {
@@ -115,6 +115,10 @@ class Header extends Component {
         this.toggleRegisterModal();
         e.preventDefault();
     }
+    logout() {
+        document.cookie = "userid" + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        this.setState({ isNavBarHidden: false });
+    }
 
     render() {
         return (
@@ -138,7 +142,14 @@ class Header extends Component {
                                         </NavLink>
                                     </NavItem>
                                 </Nav>
-                                { (this.state.isNavBarHidden) ? null : 
+                            {(this.state.isNavBarHidden) ? 
+                                <Nav navbar>
+                                    <NavItem>
+                                        <Button outline onClick={this.logout} style={{ borderColor: "transparent", boxShadow: "none" }}>
+                                            <span className="fa fa-sign-out fa-lg"></span> Logout
+                                        </Button>
+                                    </NavItem>
+                                </Nav> :
                                 <Nav navbar>
                                     <NavItem>
                                         <Button outline onClick={this.toggleLoginModal} style={{borderColor: "transparent", boxShadow: "none"}}>
