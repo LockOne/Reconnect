@@ -88,21 +88,9 @@ app.route("/login").post(async function(req,res){
     res.redirect("/classes");
 });
 
-// logout
-app.get("/logout", function(req,res){
-    console.log("clear cookie");
-    res.clearCookie('userid');
-    res.clearCookie('usertype');
-
-    console.log("destroy session");
-    //req.session.destroy();
-    //res.sendFile(path.join(__dirname , "../public/login.html"));
-});
-
-// regsiter
+// register
 app.route("/register").post(async function (req,res) {
     //console.log("route accepted ", req.body);
-
     var result = await controller_main.SignUp(req, res);
     res.send(result);
 });
@@ -118,14 +106,15 @@ var https_server = https.createServer(options, app);
 
 var socketServer = wss.createServerFrom(https_server, function connectionListener (ws) {
 
-    console.log("connected");
-
     var streamer_connected = false;
 
     let first_listener = (data) => {
         if (!streamer_connected && data == 1) {
             console.log("streamer");
             ws.removeEventListener('message', first_listener);
+
+            ws.send(0);
+
             ws.on('message', (data) => {
                 //console.log("message taken.");
                 connectedClients.forEach((wsss, i) => {
@@ -137,7 +126,23 @@ var socketServer = wss.createServerFrom(https_server, function connectionListene
                     }
                 });
             });
+
+            ws.on('close', (event) => {
+                connectedClients.forEach((wsss, i) => {
+                    if (wsss.readyState === wsss.OPEN) {
+                        //console.log("message sent");
+                        wsss.send('close');
+                    } else {
+                        connectedClients.splice(i, 1);
+                    }
+                });
+
+                connectedClients = [];
+                streamer_connected = false;
+            })
+
         } else if (streamer_connected && data == 1) {
+            ws.send(1);
             ws.close();
         } else {
             console.log("client");

@@ -57,6 +57,32 @@ class Main extends Component {
 
   }
   render() {
+    let classes = undefined;
+
+    fetch(
+      "https://tester2.kaist.ac.kr:2443/classes",
+      {method: "POST",
+       body : {},
+      headers: {
+          'Content-Type': 'application/json'
+      },
+    })
+    .then((response) => {
+        console.log("res1 : ", response);
+        response.json().then(json => {
+            console.log("json2 :", json);
+            alert(json.msg);
+            if (json.code == 0) {
+                this.setState({ isNavBarHidden: true });
+                document.cookie = "userid=" + json.userid + ";path=/";
+            }
+        });
+    })
+    .catch((error) => {
+        console.log("error : ");
+        console.log(error);
+    });
+
     const ClassWithId = ({ match }) => {
       return (
         <ClassDetail c={CLASSES.filter(cl => cl.id === parseInt(match.params.id, 10))[0]}/>

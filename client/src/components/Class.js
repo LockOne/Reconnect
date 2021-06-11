@@ -43,14 +43,14 @@ class MyWindowPortal extends React.PureComponent {
             });
         }
 
-        var isopen = false;
+        var is_webcast_open = false; //webcast open or webcast join
         var userid = "";
         var ca = document.cookie.split(';');
         for(var i=0;i < ca.length;i++) {
             var c = ca[i];
             while (c.charAt(0)==' ') c = c.substring(1,c.length);
             if (c.indexOf("webcastmode=") == 0) {
-                isopen = true;
+                is_webcast_open = true;
             }
             if (c.indexOf("userid=") == 0) {
                 userid = c.substring(7);
@@ -61,7 +61,73 @@ class MyWindowPortal extends React.PureComponent {
         var intervalID1 = undefined;
         var intervalID2 = undefined;
 
-        if (isopen) {
+        const getFrame = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const data = canvas.toDataURL('image/jpeg', 0.7);
+            return data;
+        }
+
+        const WSS_URL = "wss://tester2.kaist.ac.kr:2443";
+		const FPS = 30;
+		this.wss = new WebSocket(WSS_URL);
+
+        var session_opened = false;
+
+		this.wss.onopen = () => {
+			console.log("Stream: Connected to " + WSS_URL);
+            if (is_webcast_open) {
+
+                this.wss.onmessage = message => {
+                    if (message != 0) {
+                        //wrong connection
+                        //TODO: notify that the session is already opened
+                        this.wss.close();
+                        session_opened = false;
+                    }
+                }
+
+                session_opened = true;
+                this.wss.send(1);
+
+                intervalID1 = setInterval( () => {
+                    this.wss.send(getFrame());
+                }, 1000 / FPS);
+            } else {
+                this.wss.send(0);                
+            }
+
+            //get and show participation list
+            intervalID2 = setInterval( () => {
+                fetch(
+                    "https://tester2.kaist.ac.kr:2443/getgaze",
+                    {method: "POST",
+                     body : JSON.stringify(param),
+                     headers: {
+                         'Content-Type' : 'application/json'
+                     }
+                })
+                    .then((response) => {
+                        response.json().then(json => {
+                            var parti = this.externalWindow.document.querySelector("#participants");
+                            var resultstr = "";
+                            json.data.forEach((value, index, array) => {
+                                resultstr = resultstr + value.userid + " " + value.participating + "<br>";
+                            })
+                            parti.innerHTML = resultstr;
+                            console.log("resultstr : ", resultstr);
+                        });
+                    })
+                    .catch((error) => {
+                        console.log("fetch 2 error : ");
+                        console.log(error);
+                });
+            }, 1000);
+		}
+
+        if (is_webcast_open && session_opened) {
             this.externalWindow.document.querySelector("#videoimg").style.display = 'none';
             var streamvideo = this.externalWindow.document.querySelector("#streamcam");
             streamvideo.style.display = 'block';
@@ -102,6 +168,7 @@ class MyWindowPortal extends React.PureComponent {
                 canvas.getContext('2d').drawImage(video, 0, 0);
                 
                 //mock;
+                //TODO : face detection
                 var rand1 = Math.random();
                 if (rand1 < 0.1) {
                     param.participating = "O";
@@ -126,57 +193,7 @@ class MyWindowPortal extends React.PureComponent {
             }, 1000);
         }
 
-        const getFrame = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            const data = canvas.toDataURL('image/jpeg', 0.7);
-            return data;
-        }
-
-        const WSS_URL = "wss://tester2.kaist.ac.kr:2443";
-		const FPS = 30;
-		this.wss = new WebSocket(WSS_URL);
-
-		this.wss.onopen = () => {
-			console.log("Stream: Connected to " + WSS_URL);
-            if (isopen) {
-                this.wss.send(1);
-                intervalID1 = setInterval( () => {
-                    this.wss.send(getFrame());
-                }, 1000 / FPS);
-            } else {
-                this.wss.send(0);                
-            }
-            intervalID2 = setInterval( () => {
-                fetch(
-                    "https://tester2.kaist.ac.kr:2443/getgaze",
-                    {method: "POST",
-                     body : JSON.stringify(param),
-                     headers: {
-                         'Content-Type' : 'application/json'
-                     }
-                })
-                    .then((response) => {
-                        response.json().then(json => {
-                            var parti = this.externalWindow.document.querySelector("#participants");
-                            var resultstr = "";
-                            json.data.forEach((value, index, array) => {
-                                resultstr = resultstr + value.userid + " " + value.participating + "<br>";
-                            })
-                            parti.innerHTML = resultstr;
-                            console.log("resultstr : ", resultstr);
-                        });
-                    })
-                    .catch((error) => {
-                        console.log("fetch 2 error : ");
-                        console.log(error);
-                });
-            }, 1000);
-		}
-
-        if (!isopen) {
+        if (!is_webcast_open) {
             this.wss.onmessage = message => {
                 const img = this.externalWindow.document.querySelector("#videoimg");
                 img.src =message.data;    

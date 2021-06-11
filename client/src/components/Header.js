@@ -64,21 +64,21 @@ class Header extends Component {
                 'Content-Type': 'application/json'
             },
         })
-            .then((response) => {
-                console.log("res1 : ", response);
-                response.json().then(json => {
-                    console.log("json2 :", json);
-                    alert(json.msg);
-                    if (json.code == 0) {
-                        this.setState({ isNavBarHidden: true });
-                        document.cookie = "userid=" + json.userid + ";path=/";
-                    }
-                });
-            })
-            .catch((error) => {
-                console.log("error : ");
-                console.log(error);
+        .then((response) => {
+            console.log("res1 : ", response);
+            response.json().then(json => {
+                console.log("json2 :", json);
+                alert(json.msg);
+                if (json.code == 0) {
+                    this.setState({ isNavBarHidden: true });
+                    document.cookie = "userid=" + json.userid + ";path=/";
+                }
             });
+        })
+        .catch((error) => {
+            console.log("error : ");
+            console.log(error);
+        });
 
         e.preventDefault();
     }
