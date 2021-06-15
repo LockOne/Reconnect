@@ -58,6 +58,11 @@ class ClassDetail extends Component {
                         <img className="classImg m-3" src={ this.props.c.image }></img>
                     </div>
                 </div>
+                <div className="row justify-content-evenly p-2">
+                        <div className="col-12 col-md-auto text-center">
+                            <Link to="/webcast" className="btn btn-primary">Open</Link>
+                        </div>
+                </div>
                 { lectures }
             </div>
         )
