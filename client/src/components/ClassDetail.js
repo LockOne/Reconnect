@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Card, CardBody, CardDeck, CardTitle, CardSubtitle, CardImg, CardImgOverlay, CardText, Collapse, Button } from 'reactstrap';
-
+import { Link } from 'react-router-dom';
 const LECTURES = 
     [
         {
