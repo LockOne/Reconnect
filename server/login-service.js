@@ -18,6 +18,7 @@ exports.SignIn = async function(req){
         json.code = 0;
         json.userid = userid;
         json.usertype = findone.usertype;
+        json.classes = findone.classes;
         json.msg = "Login confirmed";
     } else {
         json.code = 100;
@@ -42,7 +43,7 @@ exports.SignUp = async function(req,res){
     console.log("find one : ", findone);
 
     if (findone === null) {
-        User.create({userid : userid, password: password, usertype: usertype}, function(err, user) {
+        User.create({userid : userid, password: password, usertype: usertype, classes : []}, function(err, user) {
             console.log("err : ", err);
         });
     } else {

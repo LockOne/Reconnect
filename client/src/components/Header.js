@@ -32,8 +32,8 @@ class Header extends Component {
         var ca = document.cookie.split(';');
         for(var i=0; i < ca.length; i++) {
             var c = ca[i];
-            while (c.charAt(0)==' ') c = c.substring(1,c.length);
-            if (c.indexOf(nameEQ) == 0) {
+            while (c.charAt(0)===' ') c = c.substring(1,c.length);
+            if (c.indexOf(nameEQ) === 0) {
                 console.log("logined, ", c);
                 this.setState({ isNavBarHidden: true });
                 break;
@@ -49,6 +49,7 @@ class Header extends Component {
     toggleRegisterModal() {
         this.setState({ isModalRegisterOpen: !this.state.isModalRegisterOpen });
     }
+
     handleLogin(e) {
         this.toggleLoginModal();
 
@@ -72,6 +73,8 @@ class Header extends Component {
                 if (json.code == 0) {
                     this.setState({ isNavBarHidden: true });
                     document.cookie = "userid=" + json.userid + ";path=/";
+                    document.cookie = "usertype=" + json.usertype + ";path=/";
+                    document.cookie = "classes=" + json.classes + ";path=/";
                 }
             });
         })
@@ -90,7 +93,6 @@ class Header extends Component {
         param.userid = this.username.value;
         param.password = this.password.value;
         param.usertype = this.usertype.value;
-        alert("client register");
         console.log(param);
 
         fetch(
@@ -105,7 +107,6 @@ class Header extends Component {
                     console.log("json2 :", json);
                     alert(json.msg);
                 })
-                //alert("register done");
             })
             .catch((error) => {
                 console.log("error : ");
@@ -115,8 +116,11 @@ class Header extends Component {
         this.toggleRegisterModal();
         e.preventDefault();
     }
+
     logout() {
         document.cookie = "userid" + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        document.cookie = "usertype" + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        document.cookie = "classes" + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         this.setState({ isNavBarHidden: false });
     }
 
