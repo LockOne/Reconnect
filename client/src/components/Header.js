@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Navbar, NavbarBrand, Jumbotron, NavbarToggler, Nav, Collapse, NavItem, Button, Modal, ModalHeader, ModalBody, Form, FormGroup, Label, Input } from 'reactstrap';
+import { Navbar, NavbarBrand, Jumbotron, NavbarToggler, Nav, Collapse, NavItem, Button, Modal, ModalHeader, ModalBody, Form, FormGroup, Label, Input, FormFeedback, Alert } from 'reactstrap';
 import { NavLink, Redirect } from 'react-router-dom';
 import { withRouter } from 'react-router'
 
@@ -10,7 +10,14 @@ class Header extends Component {
             isNavOpen: false,
             isModalLoginOpen: false,
             isModalRegisterOpen: false,
-            isNavBarHidden : false
+            isNavBarHidden: false,
+            isAlertShown: false,
+            username: "",
+            password: "",
+            touched: {
+                username: false,
+                password: false
+            }
         }
         this.toggleNav = this.toggleNav.bind(this);
         this.toggleLoginModal = this.toggleLoginModal.bind(this);
@@ -19,6 +26,8 @@ class Header extends Component {
         this.handleRegister = this.handleRegister.bind(this);
         this.handleLoad = this.handleLoad.bind(this);
         this.logout = this.logout.bind(this);
+        this.handleInputChange = this.handleInputChange.bind(this);
+        this.handleBlur = this.handleBlur.bind(this);
     }
 
     componentDidMount() {
@@ -28,7 +37,33 @@ class Header extends Component {
     componentWillUnmount() { 
         window.removeEventListener('load', this.handleLoad)  
     }
+    handleBlur = (field) => (evt) => {
+        
+        this.setState({
+            touched: { ...this.state.touched, [field]: true }
+        });
+    }
+    handleInputChange(event) {
+        this.setState({
+            [event.target.name]: event.target.value
+        });
+    }
+    validate(username, password) {
+        const errors = {
+            username: '',
+            password: ''
+        };
+        
+        if (this.state.touched.username && username.length < 3)
+            errors.username = 'Username should be >= 3 characters';
+        else if (this.state.touched.username && username.length > 10)
+            errors.username = 'Username should be <= 10 characters';
 
+        if (this.state.touched.password && password.length < 5)
+            errors.password = 'Password should be >= 5 characters';
+        
+        return errors;
+    }
     handleLoad() {
         var nameEQ = "userid=";
         var ca = document.cookie.split(';');
@@ -46,13 +81,21 @@ class Header extends Component {
         this.setState({ isNavOpen: !this.state.isNavOpen });
     }
     toggleLoginModal() {
-        this.setState({ isModalLoginOpen: !this.state.isModalLoginOpen });
+        this.setState({ isModalLoginOpen: !this.state.isModalLoginOpen, isAlertShown: false, username: '', password: '', touched: {username: false, password: false} });
     }
     toggleRegisterModal() {
-        this.setState({ isModalRegisterOpen: !this.state.isModalRegisterOpen });
+        this.setState({ isModalRegisterOpen: !this.state.isModalRegisterOpen, isAlertShown: false, username: '', password: '', touched: {username: false, password: false}});
     }
 
     handleLogin(e) {
+        const errors = this.validate(this.state.username, this.state.password);
+        if (errors.username !== '' || errors.password !== '' || !this.state.touched.username || !this.state.touched.password) {
+            this.setState({
+                isAlertShown: true
+            })
+            e.preventDefault();
+            return;
+        }
         this.toggleLoginModal();
 
         var param = {};
@@ -89,7 +132,14 @@ class Header extends Component {
         e.preventDefault();
     }
     handleRegister(e) {
-
+        const errors = this.validate(this.state.username, this.state.password);
+        if (errors.username !== '' || errors.password !== '' || !this.state.touched.username || !this.state.touched.password) {
+            this.setState({
+                isAlertShown: true
+            })
+            e.preventDefault();
+            return;
+        }
         console.log(this);
 
         var param = {};
@@ -129,6 +179,7 @@ class Header extends Component {
     }
 
     render() {
+        const errors = this.validate(this.state.username, this.state.password);
         return (
             <React.Fragment>
                     <Navbar dark expand="md">
@@ -178,15 +229,20 @@ class Header extends Component {
 
                 <Modal isOpen={ this.state.isModalLoginOpen } toggle={this.toggleLoginModal}>
                     <ModalHeader toggle={this.toggleLoginModal}>Login</ModalHeader>
+                    <div className="text-center">
+                        <Alert color="danger" isOpen={this.state.isAlertShown}>Recheck the input fields</Alert>
+                    </div>
                     <ModalBody>
                         <Form onSubmit={this.handleLogin}>
                             <FormGroup className="m-3">
                                 <Label htmlFor="username">Username</Label>
-                                <Input type="text" id="username" name="username" innerRef={ (input) => this.username = input}/>
+                                <Input type="text" id="username" name="username" innerRef={(input) => this.username = input} value={this.state.username} onChange={this.handleInputChange} onBlur={this.handleBlur('username')} valid={errors.username === '' && this.state.touched.username} invalid={errors.username !== ''} />
+                                <FormFeedback>{errors.username}</FormFeedback>
                             </FormGroup>
                             <FormGroup className="m-3">
                                 <Label htmlFor="password">Password</Label>
-                                <Input type="password" id="password" name="password" innerRef={(input) => this.password = input}/>
+                                <Input type="password" id="password" name="password" innerRef={(input) => this.password = input} value={this.state.password} onChange={this.handleInputChange} onBlur={this.handleBlur('password')} valid={errors.password === '' && this.state.touched.password} invalid={errors.password !== ''} />
+                                <FormFeedback>{errors.password}</FormFeedback>
                             </FormGroup>
                             <div className="text-center">
                                 <Button type="submit" className="primary">Login</Button>
@@ -197,15 +253,20 @@ class Header extends Component {
 
                 <Modal isOpen={ this.state.isModalRegisterOpen } toggle={this.toggleRegisterModal}>
                     <ModalHeader toggle={this.toggleRegisterModal}>Register</ModalHeader>
+                    <div className="text-center">
+                        <Alert color="danger" isOpen={this.state.isAlertShown}>Recheck the input fields</Alert>
+                    </div>
                     <ModalBody>
                         <Form onSubmit={this.handleRegister}>
                             <FormGroup className="m-3">
                                 <Label htmlFor="username">Username</Label>
-                                <Input type="text" id="username" name="username" innerRef={ (input) => this.username = input}/>
+                                <Input type="text" id="username" name="username" innerRef={(input) => this.username = input} value={this.state.username} onChange={this.handleInputChange} onBlur={this.handleBlur('username')} valid={errors.username === '' && this.state.touched.username} invalid={errors.username !== ''} />
+                                <FormFeedback>{errors.username}</FormFeedback>
                             </FormGroup>
                             <FormGroup className="m-3">
                                 <Label htmlFor="password">Password</Label>
-                                <Input type="password" id="password" name="password" innerRef={(input) => this.password = input}/>
+                                <Input type="password" id="password" name="password" innerRef={(input) => this.password = input} value={this.state.password} onChange={this.handleInputChange} onBlur={this.handleBlur('password')} valid={errors.password === '' && this.state.touched.password} invalid={errors.password !== ''} />
+                                <FormFeedback>{errors.password}</FormFeedback>
                             </FormGroup>
                             <FormGroup className="m-3">
                                 <Label htmlFor="usertype">User type</Label>
