@@ -192,12 +192,18 @@ class Webcast extends Component {
                 <link rel="stylesheet" href="webcast.css" />
                 <script type="text/javascript" src="https://kit.fontawesome.com/c939d0e917.js"></script>
                 <script type="text/javascript" src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script> 
+                <script type="text/javascript" src="Subtitle.js"></script>
                 <div class="main">  
                     <div class="main__left">
                         <div id="sharevideo_cont">
                             <video autoplay="true" id = "sharevideo">
                             </video>
                         </div>
+                        <div id="subtitles">
+        	                <textarea id="textbox" rows="5" cols="100" style="background-color:black;color:white; text-transform:uppercase; font-size:large"> </textarea>
+        	                <button id="sub_start">Show Subtitles</button>
+        	                <button id="sub_stop">Hide Subtitles</button>
+    	                </div>
                         <div class="options">
                             <div class="options__left">
                                 <div id="showChat" class="options__button">
