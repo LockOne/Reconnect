@@ -24,8 +24,9 @@ class ClassDetail extends Component {
             arr.push(false);
         }
         this.state = {
-            isOpen: arr
-        }
+            isOpen: arr,
+            is_webcast_open : false
+        };
 
         this.usertype = "";
 
@@ -37,6 +38,22 @@ class ClassDetail extends Component {
                 this.usertype = c.substring(9);
             }
         }
+
+        fetch(
+            "https://tester2.kaist.ac.kr:2443/get_cur_id",
+            {method: "POST",
+            body : {}
+        })
+        .then((response) => {
+            response.json().then(json => {
+                this.setState({ is_webcast_open: json.res != "" });
+            })
+        })
+        .catch((error) => {
+            console.log("error : ");
+            console.log(error);
+        });
+
     }
 
     toggle(id) {
@@ -46,6 +63,7 @@ class ClassDetail extends Component {
             isOpen: isOpen
         });
     }
+
     render() {
         const lectures = LECTURES.map((lecture) => {
             return (
@@ -70,10 +88,11 @@ class ClassDetail extends Component {
                     </div>
                 </div>
                 <div className="row justify-content-evenly p-2">
-                        <div className="col-12 col-md-auto text-center">
+                        <div className="col-12 col-md-auto text-center" id="joinbutton">
                             {(this.usertype == "Professor") ? <Link to="/webcast" className="btn btn-primary">Open</Link> :
-                            (this.usertype == "Student") ? <Link to="/webcast" className="btn btn-primary">Join</Link> :
-                            <Link to="/webcast" className="disabledCursor" onClick={ (event) => event.preventDefault() }>Join</Link>}
+                            (this.state.is_webcast_open) ? <Link to="/webcast" className="btn btn-primary">Join</Link> :
+                                <Button color="secondary" disabled>Join</Button>
+                            }
                         </div>
                 </div>
                 { lectures }

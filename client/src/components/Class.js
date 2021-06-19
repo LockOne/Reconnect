@@ -9,7 +9,8 @@ class Class extends Component {
 
         this.state = {
             showWindowPortal: false,
-          };
+            classes : [],
+        };
 
         this.toggleWindowPortal = this.toggleWindowPortal.bind(this);
         this.closeWindowPortal = this.closeWindowPortal.bind(this);
@@ -41,7 +42,7 @@ class Class extends Component {
     }
 
     render() {
-        if (this.props.classes.length === 0 ) {
+        if (this.state.classes.length === 0 ) {
             fetch(
                 "https://tester2.kaist.ac.kr:2443/getclasses",
                 {method: "POST",
@@ -51,7 +52,7 @@ class Class extends Component {
                 console.log("res1 : ", response);
                 response.json().then(json => {
                     console.log("json2 :", json);
-                    this.props.classes = json;
+                    this.setState({classes : json});
                 });
             })
             .catch((error) => {
@@ -60,9 +61,9 @@ class Class extends Component {
             });
         }
         
-        console.log("this.props.classes", this.props.classes);
+        console.log("this.state.classes", this.state.classes);
 
-        const classes = this.props.classes.map((c) => {
+        const classes = this.state.classes.map((c) => {
             return (
                 
                 <div key={c.id} className="col-12 col-md-3 m-5 me-auto">

@@ -120,6 +120,12 @@ app.route("/getclasses").post(async function (req,res) {
     res.send(result);
 });
 
+var cur_main_peer_id = "";
+app.route("/get_cur_id").post(async function (req,res) {
+    res.send({res : cur_main_peer_id});
+});
+
+
 app.use(function(req, res, next) {
     //console.log(req);
     res.status(404).send('Unable to find the requested resource!');
@@ -147,8 +153,6 @@ io.on("connection", (socket) => {
     });
 });
 
-var cur_main_peer_id = "";
-
 io.on('connection', socket => {
     console.log('socket established')
     socket.on('join-room', (userData) => {
@@ -161,30 +165,24 @@ io.on('connection', socket => {
         socket.on('disconnect', () => {
             socket.to(roomID).emit('user-disconnected', userID);
         });
-        socket.on('broadcast-message', (message) => {
-            socket.to(roomID).emit('new-broadcast-messsage', {...message, userData});
-        });
-        // socket.on('reconnect-user', () => {
-        //     socket.to(roomID).broadcast.emit('new-user-connect', userData);
-        // });
-        socket.on('display-media', (value) => {
-            socket.to(roomID).emit('display-media', {userID, value });
-        });
-        socket.on('user-video-off', (value) => {
-            socket.to(roomID).emit('user-video-off', value);
-        });
 
         //chat
         socket.on("message", (message, username) => {
             io.to(roomID).emit("createMessage", message, username);
         });
+
+        socket.on("Finish", () => {
+            socket.to(roomID).emit("getout");
+        })
     });
 
-    socket.on("opened-room", (peerid) => {
+    socket.on("set_cur_main_id", (peerid) => {
         console.log("setting main peer id : ", peerid);
         cur_main_peer_id = peerid;
     });
 });
+
+
 
  
 

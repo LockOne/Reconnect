@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { Navbar, NavbarBrand, Jumbotron, NavbarToggler, Nav, Collapse, NavItem, Button, Modal, ModalHeader, ModalBody, Form, FormGroup, Label, Input } from 'reactstrap';
 import { NavLink, Redirect } from 'react-router-dom';
+import { withRouter } from 'react-router'
+
 class Header extends Component {
     constructor(props) {
         super(props);
@@ -75,6 +77,7 @@ class Header extends Component {
                     document.cookie = "userid=" + json.userid + ";path=/";
                     document.cookie = "usertype=" + json.usertype + ";path=/";
                     document.cookie = "classes=" + json.classes + ";path=/";
+                    this.porps.history.push('/classes');
                 }
             });
         })
@@ -223,4 +226,5 @@ class Header extends Component {
         )
     }
 }
-export default Header;
+
+export default withRouter(Header);

@@ -2,6 +2,7 @@ import Peer from 'peerjs';
 import React, { Component } from 'react';
 import { Button } from 'reactstrap';
 import io from "socket.io-client";
+import { withRouter } from 'react-router'
 
 class Webcast extends Component {
     constructor(props) {
@@ -16,6 +17,21 @@ class Webcast extends Component {
         this.sendtext = this.sendtext.bind(this);
         this.trycall = this.trycall.bind(this);
         this.setpeeropen = this.setpeeropen.bind(this);
+        this.exit = this.exit.bind(this);
+    }
+
+    exit() {
+        if (this.is_professor) {
+            this.socket.emit("set_cur_main_id", "");
+            this.socket.emit("Finish");
+        }
+        if (this.myPeer != undefined) {
+            this.myPeer.disconnect();
+        }
+        if (this.socket != undefined) {
+            this.socket.close();
+        }
+        this.props.history.push('/classes');
     }
 
     setpeeropen(sharevideo) {
@@ -31,7 +47,7 @@ class Webcast extends Component {
             if (!this.is_professor) {
                 this.trycall(myid, sharevideo);
             } else {
-                this.socket.emit("opened-room", myid);
+                this.socket.emit("set_cur_main_id", myid);
                 this.myPeer.on('call', (call) => {
                     call.answer(this.myVideoStream);
                     call.on('error', () => {
@@ -165,6 +181,9 @@ class Webcast extends Component {
             </div>`;
         });
 
+        this.socket.on("getout", () => {
+            this.exit();
+        });
     }
 
     render() {
@@ -181,20 +200,14 @@ class Webcast extends Component {
                         </div>
                         <div class="options">
                             <div class="options__left">
-                                <div id="stopVideo" class="options__button">
-                                    <i class="fa fa-video-camera"></i>
-                                </div>
-                                <div id="muteButton" class="options__button">
-                                    <i class="fa fa-microphone"></i>
-                                </div>
                                 <div id="showChat" class="options__button">
                                     <i class="fa fa-comment"></i>
                                 </div>
                             </div>
                             <div class="options__right">
-                                <div id="exitButton" class="options__button">
-                                    <i class="fas fa-user-plus">Exit</i>
-                                </div>
+                                {(this.is_professor) ?
+                                <Button color="danger" onClick={this.exit}><i>Finish and Exit</i></Button> :
+                                <Button color="danger" onClick={this.exit}><i>Exit</i></Button>}
                             </div>
                         </div>
                     </div>
@@ -221,4 +234,4 @@ class Webcast extends Component {
     }
 }
 
-export default Webcast;
+export default withRouter(Webcast);
