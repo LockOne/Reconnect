@@ -26,6 +26,17 @@ class ClassDetail extends Component {
         this.state = {
             isOpen: arr
         }
+
+        this.usertype = "";
+
+        var ca = document.cookie.split(';');
+        for(var i=0;i < ca.length;i++) {
+            var c = ca[i];
+            while (c.charAt(0)===' ') c = c.substring(1,c.length);
+            if (c.indexOf("usertype=") === 0) {
+                this.usertype = c.substring(9);
+            }
+        }
     }
 
     toggle(id) {
@@ -60,7 +71,9 @@ class ClassDetail extends Component {
                 </div>
                 <div className="row justify-content-evenly p-2">
                         <div className="col-12 col-md-auto text-center">
-                            <Link to="/webcast" className="btn btn-primary">Open</Link>
+                            {(this.usertype == "Professor") ? <Link to="/webcast" className="btn btn-primary">Open</Link> :
+                            (this.usertype == "Student") ? <Link to="/webcast" className="btn btn-primary">Join</Link> :
+                            <Link to="/webcast" className="disabledCursor" onClick={ (event) => event.preventDefault() }>Join</Link>}
                         </div>
                 </div>
                 { lectures }

@@ -13,8 +13,6 @@ class Class extends Component {
 
         this.toggleWindowPortal = this.toggleWindowPortal.bind(this);
         this.closeWindowPortal = this.closeWindowPortal.bind(this);
-        this.openwebcast = this.openwebcast.bind(this);
-
     }
 
     componentDidMount() {
@@ -36,15 +34,6 @@ class Class extends Component {
   
     closeWindowPortal() {
         this.setState({ showWindowPortal: false })
-    }
-
-    joinwebcast() {
-    }
-
-    openwebcast() {
-
-        document.cookie = "webcastmode=open;path=/";
-
     }
     
     openClass(c) {

@@ -122,6 +122,7 @@ class Header extends Component {
         document.cookie = "usertype" + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         document.cookie = "classes" + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         this.setState({ isNavBarHidden: false });
+        
     }
 
     render() {

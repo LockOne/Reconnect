@@ -2,15 +2,15 @@ var express = require('express');
 var app = express();
 //var router = express.Router();
 var cors = require('cors');
+
 app.use(cors({
-    origin : "https://tester2.kaist.ac.kr:1443",
+    origin : "https://tester2.kaist.ac.kr:3443",
     credentials: true,
   }));
  
 app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 
-const { v4: uuidv4 } = require("uuid");
 app.set("view engine", "ejs");
 
 var mongoose = require('mongoose');
@@ -32,7 +32,12 @@ const options = {
     ca: fs.readFileSync("/etc/letsencrypt/live/tester2.kaist.ac.kr/chain.pem")
 };
 
-const path = require("path");
+var peerserver = require("peer").PeerServer(
+    {
+        port : 4443,
+        ssl : options
+    });
+
 var controller_main = require("./server/login-controller");
 
 var Participate = require("./server/Participate");
@@ -133,76 +138,53 @@ const io = require("socket.io")(https_server, {
     }
 });
 
-const { ExpressPeerServer } = require("peer");
-const peerServer = ExpressPeerServer(https_server, {
-  debug: true,
-});
-app.use("/peerjs", peerServer);
 
 io.on("connection", (socket) => {
     socket.on("join-room", (roomId, userId, userName) => {
             socket.join(roomId);
             //socket.to(roomId).broadcast.emit("user-connected", userId);
-            socket.on("message", (message) => {
+            
+    });
+});
+
+var cur_main_peer_id = "";
+
+io.on('connection', socket => {
+    console.log('socket established')
+    socket.on('join-room', (userData) => {
+        const { roomID, userID } = userData;
+        console.log("get userdata : ", userData);
+        socket.join(roomID);
+        console.log("sending main id : ", cur_main_peer_id);
+        socket.emit("receive_main_id", cur_main_peer_id);
+        socket.to(roomID).emit('new-user-connect', userData);
+        socket.on('disconnect', () => {
+            socket.to(roomID).emit('user-disconnected', userID);
+        });
+        socket.on('broadcast-message', (message) => {
+            socket.to(roomID).emit('new-broadcast-messsage', {...message, userData});
+        });
+        // socket.on('reconnect-user', () => {
+        //     socket.to(roomID).broadcast.emit('new-user-connect', userData);
+        // });
+        socket.on('display-media', (value) => {
+            socket.to(roomID).emit('display-media', {userID, value });
+        });
+        socket.on('user-video-off', (value) => {
+            socket.to(roomID).emit('user-video-off', value);
+        });
+
+        //chat
+        socket.on("message", (message) => {
             io.to(roomId).emit("createMessage", message, userName);
         });
     });
-});
 
-/*
-const socketServer = wss.createServerFrom(https_server, function connectionListener (ws) {
-
-    var streamer_connected = false;
-
-    let first_listener = (data) => {
-        if (!streamer_connected && data == 1) {
-            console.log("streamer");
-            ws.removeEventListener('message', first_listener);
-
-            ws.send(0);
-
-            ws.on('message', (data) => {
-                //console.log("message taken.");
-                connectedClients.forEach((wsss, i) => {
-                    if (wsss.readyState === wsss.OPEN) {
-                        //console.log("message sent");
-                        wsss.send(data);
-                    } else {
-                        connectedClients.splice(i, 1);
-                    }
-                });
-            });
-
-            ws.on('close', (event) => {
-                connectedClients.forEach((wsss, i) => {
-                    if (wsss.readyState === wsss.OPEN) {
-                        //console.log("message sent");
-                        wsss.send('close');
-                    } else {
-                        connectedClients.splice(i, 1);
-                    }
-                });
-
-                connectedClients = [];
-                streamer_connected = false;
-            })
-
-        } else if (streamer_connected && data == 1) {
-            ws.send(1);
-            ws.close();
-        } else {
-            console.log("client");
-            connectedClients.push(ws);
-        }
-    }
-
-    ws.on('message', first_listener);
-    
-    ws.on("error", function(event) {
-        console.log("stream: Server error, ", event.data);
+    socket.on("opened-room", (peerid) => {
+        console.log("setting main peer id : ", peerid);
+        cur_main_peer_id = peerid;
     });
 });
-*/
 
  
 

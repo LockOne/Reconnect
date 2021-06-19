@@ -39,20 +39,66 @@
   flex-direction: column;
 }
 
-.videos__group {
-  flex-grow: 1;
+.main__right {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  flex: 0.3;
+  background-color: #242f41;
   align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.main__right2 {
+  display: flex;
+  flex-direction: column;
+  flex: 0.2;
+  background-color: #242f41;
+}
+
+#participants {
+  display: flex;
+  flex : 1;
+  height: 50%;
+  width: 100%;
+}
+
+#myvideo_cont {
+  align-items: center;
+  display : flex;
+  flex : 1;
+  height: 50%;
+  width: 100%;
   padding: 1rem;
   background-color: var(--main-dark);
 }
 
-video {
-  height: 300px;
+#sharevideo_cont {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  padding: 0.2rem;
+  background-color: var(--main-dark);
+  align-items: center;
+}
+
+#myvideo {
+  display: flex;
+  height: auto;
   border-radius: 1rem;
-  margin: 0.5rem;
-  width: 400px;
+  width: 100%;
+  object-fit: cover;
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
+  -moz-transform: rotateY(180deg);
+}
+
+#sharevideo {
+  display: flex;
+  height: auto;
+  border-radius: 1rem;
+  margin: 0.2rem;
+  width: 100%;
   object-fit: cover;
   transform: rotateY(180deg);
   -webkit-transform: rotateY(180deg);
@@ -88,20 +134,6 @@ video {
 
 .background__red {
   background-color: #f6484a;
-}
-
-.main__right {
-  display: flex;
-  flex-direction: column;
-  flex: 0.3;
-  background-color: #242f41;
-}
-
-.main__right2 {
-  display: flex;
-  flex-direction: column;
-  flex: 0.2;
-  background-color: #242f41;
 }
 
 .main__chat_window {
