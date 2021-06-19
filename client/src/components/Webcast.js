@@ -2,7 +2,11 @@ import Peer from 'peerjs';
 import React, { Component } from 'react';
 import { Button } from 'reactstrap';
 import io from "socket.io-client";
-import { withRouter } from 'react-router'
+import { withRouter } from 'react-router';
+import * as faceApi from "face-api.js";
+
+const pScore = 0;
+const faceOn = 0;
 
 class Webcast extends Component {
     constructor(props) {
@@ -19,6 +23,8 @@ class Webcast extends Component {
         this.setpeeropen = this.setpeeropen.bind(this);
         this.exit = this.exit.bind(this);
     }
+    video = React.createRef();
+    state = { faceOn, pScore };
 
     exit() {
         if (this.is_professor) {
@@ -87,6 +93,44 @@ class Webcast extends Component {
             chat_message.value = "";
         }
     }
+
+    run = async () => {
+        try {
+          await faceApi.nets.tinyFaceDetector.load("/models/");
+          this.mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user" }
+          });
+          this.video.current.srcObject = this.mediaStream;
+        } catch (e) {
+          this.log(e.name, e.message, e.stack);
+        }
+    };
+
+    onPlay = async () => {
+        if (
+          this.video.current.paused ||
+          this.video.current.ended ||
+          !faceApi.nets.tinyFaceDetector.params
+        ) {
+          setTimeout(() => this.onPlay());
+          return;
+        }
+        const options = new faceApi.TinyFaceDetectorOptions({
+          inputSize: 512,
+          scoreThreshold: 0.5
+        });
+        const result = await faceApi.detectSingleFace(this.video.current, options);
+        if (result) {
+          const faceOn = 1;
+          this.setState(() => ({ faceOn }));
+          this.state.pScore = 1 + this.state.pScore;
+        }
+        if (!result) {
+          const faceOn = 0;
+          this.setState(() => ({ faceOn }));
+        }
+        setTimeout(() => this.onPlay(), 1000);
+    };
 
     componentDidMount() {
         this.myPeer = new Peer("", {host: "tester2.kaist.ac.kr", port : "4443"});
@@ -184,6 +228,7 @@ class Webcast extends Component {
         this.socket.on("getout", () => {
             this.exit();
         });
+        this.run();
     }
 
     render() {
@@ -219,6 +264,27 @@ class Webcast extends Component {
                     </div>
                     <div class="main__right">
                         <div id="participants"></div>
+                        <div id="video_participation">
+                        <video
+                            ref={this.video}
+                            autoPlay
+                            muted
+                            onPlay={this.onPlay}
+                            style={{
+                                position: "relative",
+                                width: "20%",
+                                height: "10vh"
+                            }}
+                        ></video>
+                        </div>
+                        <div id="face_detection">
+                            Current face detection result (1 means on):
+                            {this.state.faceOn}
+                        </div>
+                        <div id="pScore">
+                            Current participation score:
+                            {this.state.pScore}
+                        </div>
                         <div id="myvideo_cont">
                             <video autoplay="true" id = "myvideo">
                             </video>

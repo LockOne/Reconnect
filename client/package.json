@@ -13,6 +13,7 @@
     "canvas": "^2.8.0",
     "concurrently": "^6.2.0",
     "cors": "^2.8.5",
+    "face-api.js": "0.18.0",
     "font-awesome": "^4.7.0",
     "mariadb": "^2.5.3",
     "nodemon": "^2.0.7",
