@@ -5,27 +5,50 @@ import io from "socket.io-client";
 class Webcast extends Component {
     constructor(props) {
         super(props);
-        this.shareVideo = React.createRef();
-        this.text = React.createRef();
-        this.send = React.createRef();
-        this.messages = React.createRef();
         this.myPeer = undefined;
         this.socket = undefined;
-        this.trycall = this.trycall.bind(this);
         this.main_peer_id = "";
         this.streaming = false;
         this.username  = "";
-        this.userData = undefined;
+        this.myVideoStream = undefined;
+        this.is_professor = false;
+        this.sendtext = this.sendtext.bind(this);
+        this.trycall = this.trycall.bind(this);
+        this.setpeeropen = this.setpeeropen.bind(this);
     }
 
-    trycall(myVideoStream, myid, sharevideo) {        
-        console.log("mainid : ", this.main_peer_id);
-        console.log("mystream : ", myVideoStream);
-        if (this.main_peer_id == "") {
+    setpeeropen(sharevideo) {
+        console.log("setpeeropen stream : ", this.myVideoStream);
+        this.myPeer.on('open', (myid) => {
+            const roomID = "defaultroomID";
+            const userData = { userID : myid,  roomID : roomID };
+            console.log('peers established and joined room', userData);
+            this.socket.on("receive_main_id", (mainID) => {
+                this.main_peer_id = mainID;
+            })
+            this.socket.emit('join-room', userData);
+            if (!this.is_professor) {
+                this.trycall(myid, sharevideo);
+            } else {
+                this.socket.emit("opened-room", myid);
+                this.myPeer.on('call', (call) => {
+                    call.answer(this.myVideoStream);
+                    call.on('error', () => {
+                        console.log('peer error ------');
+                    });
+                });
+            }
+        });
+    }
+
+    trycall(myid, sharevideo) {        
+        console.log("peer id : ", this.main_peer_id);
+        console.log("myvideostream : ", this.myVideoStream);
+        if ((this.main_peer_id == "") || (this.myVideoStream == undefined)) {
             console.log("waiting 1s...");
-            setTimeout(() => this.trycall(myVideoStream, myid, sharevideo), 1000);
+            setTimeout(() => this.trycall(myid, sharevideo), 1000);
         } else {
-            const call = this.myPeer.call(this.main_peer_id, myVideoStream, { metadata: { id: myid } });
+            const call = this.myPeer.call(this.main_peer_id, this.myVideoStream, { metadata: { id: myid } });
     
             console.log("call : " , call);
             call.on('stream', (userVideoStream) => {
@@ -37,6 +60,14 @@ class Webcast extends Component {
             call.on('error', () => {
                 console.log('peer error ------')
             })
+        }
+    }
+
+    sendtext() {
+        const chat_message = document.querySelector("#text");
+        if (chat_message.value.length !== 0) {
+            this.socket.emit("message", chat_message.value);
+            chat_message.value = "";
         }
     }
 
@@ -66,16 +97,14 @@ class Webcast extends Component {
             console.log('socket error --', err);
         });
 
-        let myVideoStream;
-
-        var is_prefessor = false; //webcast open or webcast join
+        this.is_professor = false;
         var ca = document.cookie.split(';');
         for(var i=0;i < ca.length;i++) {
             var c = ca[i];
             while (c.charAt(0)===' ') c = c.substring(1,c.length);
             if (c.indexOf("usertype=") === 0) {
                 if (c.substring(9) == "Professor") {
-                    is_prefessor = true;
+                    this.is_professor = true;
                 }
             }
             if (c.indexOf("userid=") === 0) {
@@ -83,77 +112,51 @@ class Webcast extends Component {
             }
         }
 
-        console.log("is professor ? : ", is_prefessor);
+        console.log("is professor ? : ", this.is_professor);
+        const is_professor = this.is_professor;
         const myvideo = document.querySelector("#myvideo");
         const sharevideo = document.querySelector("#sharevideo");
+
+        var temp_a = this;
         
         if (navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: true, audio : true})
             .then(function (stream) {
-                myVideoStream = stream;
-                console.log("trying setting myvideo");
+                temp_a.myVideoStream = stream;
                 myvideo.srcObject = stream;
                 myvideo.addEventListener("loadedmetadata", () => {
                     myvideo.play();
                 });
-                console.log("myvideo set");
-                if (is_prefessor) {
+                if (is_professor) {
                     sharevideo.srcObject = stream;
                     sharevideo.addEventListener("loadedmetadata", () => {
                         sharevideo.play();
                     });
                 }
-            })
+            }).then(this.setpeeropen(sharevideo))
             .catch(function (err) {
-                console.log("Something went wrong!");
+                console.log("Something went wrong!: ", err);
             });
         }
-
-        this.myPeer.on('open', (myid) => {
-            const roomID = "defaultroomID";
-            this.userData = { userID : myid,  roomID : roomID };
-            console.log('peers established and joined room', this.userData);
-            this.socket.on("receive_main_id", (mainID) => {
-                console.log("mainid received : ", mainID);
-                this.main_peer_id = mainID;
-            })
-            this.socket.emit('join-room', this.userData);
-            if (!is_prefessor) {
-                this.trycall(myVideoStream, myid, sharevideo);
-            } else {
-                this.socket.emit("opened-room", myid);
-                this.myPeer.on('call', (call) => {
-                    call.answer(myVideoStream);
-                    call.on('error', () => {
-                        console.log('peer error ------');
-                    });
-                    //peers[call.metadata.id] = call;
-                });
-            }
-        });
 
         this.myPeer.on('error', (err) => {
             console.log('peer connection error', err);
             this.myPeer.reconnect();
         })
-
-        this.send.current.addEventListener("click", (e) => {
-            if (this.text.current.value.length !== 0) {
-              this.socket.emit("message", this.text.current.value);
-              this.text.current.value = "";
-            }
-          });
-          
-        this.text.current.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && this.text.current.value.length !== 0) {
-            this.socket.emit("message", this.text.current.value);
-            this.current.text.value = "";
+/*
+        const text = document.querySelector("#text");
+        text.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && text.value.length !== 0) {
+            this.socket.emit("message", text.value);
+            text.value = "";
         }
-        });
+        });*/
+
+        const message_cont = document.querySelector("#meesage_cont");
 
         this.socket.on("createMessage", (message, userName) => {
-        this.messages.current.innerHTML =
-            this.messages.current.innerHTML +
+            message_cont.innerHTML =
+            message_cont.innerHTML +
             `<div class="message">
                 <b><i class="far fa-user-circle"></i> <span> ${
                 userName === this.username ? "me" : userName
@@ -203,14 +206,17 @@ class Webcast extends Component {
                         </div>
                     </div>
                     <div class="main__right2">
-                        <div class="main__chat_window">
+                        <div class="main__chat_window" id ="meesage_cont">
                             <div class="messages">
                             </div>
                         </div>
                         <div class="main__message_container">
-                            <input id="chat_message" type="text" autocomplete="off" placeholder="Type message here..." ref={this.text}/>
-                            <div id="send" class="options__button" ref={this.send}>
+                            <input id="chat_message" type="text" autocomplete="off" placeholder="Type message here..."/>
+                            <button onClick={this.sendtext}>
                                 <i class="fa fa-plus" aria-hidden="true"></i>
+                            </button>
+                            <div id="send" class="options__button">
+                                
                             </div>
                         </div>
                     </div>
