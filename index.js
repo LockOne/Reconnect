@@ -14,8 +14,7 @@ app.use(express.json());
 app.set("view engine", "ejs");
 
 var mongoose = require('mongoose');
-const mongodbURL = ""
-//secret;
+const mongodbURL = "" //secret;
 var option = {
     useNewUrlParser: true
   };
@@ -176,8 +175,8 @@ io.on('connection', socket => {
         });
 
         //chat
-        socket.on("message", (message) => {
-            io.to(roomId).emit("createMessage", message, userName);
+        socket.on("message", (message, username) => {
+            io.to(roomID).emit("createMessage", message, username);
         });
     });
 

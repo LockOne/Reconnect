@@ -1,5 +1,6 @@
 import Peer from 'peerjs';
 import React, { Component } from 'react';
+import { Button } from 'reactstrap';
 import io from "socket.io-client";
 
 class Webcast extends Component {
@@ -64,9 +65,9 @@ class Webcast extends Component {
     }
 
     sendtext() {
-        const chat_message = document.querySelector("#text");
+        const chat_message = document.querySelector("#chat_message");
         if (chat_message.value.length !== 0) {
-            this.socket.emit("message", chat_message.value);
+            this.socket.emit("message", chat_message.value, this.username);
             chat_message.value = "";
         }
     }
@@ -88,7 +89,6 @@ class Webcast extends Component {
         });
         this.socket.on('user-disconnected', (userID) => {
             console.log('user disconnected-- closing peers', userID);
-            peers[userID] && peers[userID].close();
         });
         this.socket.on('disconnect', () => {
             console.log('socket disconnected --');
@@ -212,12 +212,7 @@ class Webcast extends Component {
                         </div>
                         <div class="main__message_container">
                             <input id="chat_message" type="text" autocomplete="off" placeholder="Type message here..."/>
-                            <button onClick={this.sendtext}>
-                                <i class="fa fa-plus" aria-hidden="true"></i>
-                            </button>
-                            <div id="send" class="options__button">
-                                
-                            </div>
+                            <Button color="primary" onClick={this.sendtext}><i class="fa fa-plus" aria-hidden="true"></i></Button>
                         </div>
                     </div>
                 </div>
