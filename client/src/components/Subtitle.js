@@ -1,34 +1,38 @@
-const startElem = document.getElementById("sub_start");
-const stopElem = document.getElementById("sub_stop");
+import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 
-startElem.addEventListener("click", function(evt) {
-    recognition.start()
-}, false);
+function Subtitle() {
+  const { transcript, resetTranscript } = useSpeechRecognition();
+  if (!SpeechRecognition.browserSupportsSpeechRecognition()) {
+    return (
+      <div className="mircophone-container">
+        Browser is not Support Speech Recognition.
+      </div>
+    );
+  }
 
-stopElem.addEventListener("click", function(evt) {
-    recognition.stop();
-    document.getElementById('textbox').value = "";
-}, false);
+  SpeechRecognition.startListening({
+    continuous: true,
+    language : 'en'
+  });
 
-window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
-let finalTranscript = '';
-let recognition = new window.SpeechRecognition();
+  var splited = transcript.split(" ");
+  var result = "";
 
-recognition.interimResults = true;
-recognition.maxAlternatives = 10;
-recognition.continuous = true;
-recognition.lang = "en";
+  if (splited.length >= 12) {
+    result = splited.slice(splited.length - 12).join(' ');
+  } else {
+    result = transcript;
+  }
 
-recognition.onresult = (event) => {
-    let interimTranscript = '';
-    for (let i = event.resultIndex, len = event.results.length; i < len; i++) {
-        let transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-            finalTranscript += transcript;
-        } else {
-            interimTranscript += transcript;
-        }
-    }
-    document.getElementById('textbox').value = finalTranscript + interimTranscript;
-    document.getElementById("textbox").scrollTop = document.getElementById("textbox").scrollHeight;
+  //console.log("transcript : ", transcript);
+  //console.log("result : ", result);
+
+  return (
+    <div>
+      {result && (
+        <div id="textbox" data-value="1">{result}</div>
+      )}
+    </div>
+  );
 }
+export default Subtitle;

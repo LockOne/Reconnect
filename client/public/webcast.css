@@ -105,6 +105,12 @@
   -moz-transform: rotateY(180deg);
 }
 
+#textbox {
+  background-color:black;
+  color:white;
+  width : 90%;
+}
+
 .options {
   padding: 1rem;
   display: flex;

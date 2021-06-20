@@ -120,7 +120,7 @@ class Header extends Component {
                     document.cookie = "userid=" + json.userid + ";path=/";
                     document.cookie = "usertype=" + json.usertype + ";path=/";
                     document.cookie = "classes=" + json.classes + ";path=/";
-                    this.porps.history.push('/classes');
+                    this.props.history.push('/classes');
                 }
             });
         })

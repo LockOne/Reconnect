@@ -2,7 +2,8 @@ import Peer from 'peerjs';
 import React, { Component } from 'react';
 import { Button } from 'reactstrap';
 import io from "socket.io-client";
-import { withRouter } from 'react-router'
+import { withRouter } from 'react-router';
+import Subtitle from "./Subtitle.js";
 
 class Webcast extends Component {
     constructor(props) {
@@ -14,10 +15,22 @@ class Webcast extends Component {
         this.username  = "";
         this.myVideoStream = undefined;
         this.is_professor = false;
+        this.textbox = undefined;
+        this.transcript = undefined;
         this.sendtext = this.sendtext.bind(this);
         this.trycall = this.trycall.bind(this);
         this.setpeeropen = this.setpeeropen.bind(this);
         this.exit = this.exit.bind(this);
+        this.getTextbox = this.getTextbox.bind(this);
+        this.sendsubtitle = this.sendsubtitle.bind(this);
+    }
+
+    sendsubtitle() {
+        console.log("sending subtitle : ", this.textbox);
+        if (this.textbox != undefined) {
+            console.log("sending subtitle : ", this.textbox.innerHTML);
+            this.socket.emit("subtitle", this.textbox.innerHTML);
+        }
     }
 
     exit() {
@@ -34,6 +47,13 @@ class Webcast extends Component {
         this.props.history.push('/classes');
     }
 
+    getTextbox() { 
+        this.textbox = document.querySelector("#textbox");
+        if (this.textbox == undefined) {
+            setTimeout(() => this.getTextbox(), 1000);
+        }
+    }
+
     setpeeropen(sharevideo) {
         console.log("setpeeropen stream : ", this.myVideoStream);
         this.myPeer.on('open', (myid) => {
@@ -45,7 +65,7 @@ class Webcast extends Component {
             })
             this.socket.emit('join-room', userData);
             if (!this.is_professor) {
-                this.trycall(myid, sharevideo);
+                this.trycall(myid, sharevideo, 0);
             } else {
                 this.socket.emit("set_cur_main_id", myid);
                 this.myPeer.on('call', (call) => {
@@ -58,12 +78,51 @@ class Webcast extends Component {
         });
     }
 
-    trycall(myid, sharevideo) {        
+    trycall(myid, sharevideo, numtry) {        
         console.log("peer id : ", this.main_peer_id);
         console.log("myvideostream : ", this.myVideoStream);
-        if ((this.main_peer_id == "") || (this.myVideoStream == undefined)) {
+
+        if (numtry >= 5 && (this.main_peer_id != "")) {
+            const createEmptyAudioTrack = () => {
+                const ctx = new AudioContext();
+                const oscillator = ctx.createOscillator();
+                const dst = oscillator.connect(ctx.createMediaStreamDestination());
+                oscillator.start();
+                const track = dst.stream.getAudioTracks()[0];
+                return Object.assign(track, { enabled: false });
+            };
+              
+            const createEmptyVideoTrack = ({ width, height }) => {
+                const canvas = Object.assign(document.createElement('canvas'), { width, height });
+                canvas.getContext('2d').fillRect(0, 0, width, height);
+              
+                const stream = canvas.captureStream();
+                const track = stream.getVideoTracks()[0];
+              
+                return Object.assign(track, { enabled: false });
+            };
+              
+            const audioTrack = createEmptyAudioTrack();
+            const videoTrack = createEmptyVideoTrack({ width:640, height:480 });
+            const mediaStream = new MediaStream([audioTrack, videoTrack]);
+              
+            const call = this.myPeer.call(this.main_peer_id, mediaStream, { metadata: { id: myid } });
+
+            console.log("call : ", call);
+
+            call.on('stream', (userVideoStream) => {
+                sharevideo.srcObject = userVideoStream;
+            });
+            call.on('close', () => {
+                console.log('closing call');
+            });
+            call.on('error', () => {
+                console.log('peer error ------')
+            });
+
+        } else if ((this.main_peer_id == "") || (this.myVideoStream == undefined)) {
             console.log("waiting 1s...");
-            setTimeout(() => this.trycall(myid, sharevideo), 1000);
+            setTimeout(() => this.trycall(myid, sharevideo, numtry + 1), 1000);
         } else {
             const call = this.myPeer.call(this.main_peer_id, this.myVideoStream, { metadata: { id: myid } });
     
@@ -138,6 +197,7 @@ class Webcast extends Component {
         if (navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: true, audio : true})
             .then(function (stream) {
+                console.log("stream : ", stream);
                 temp_a.myVideoStream = stream;
                 myvideo.srcObject = stream;
                 myvideo.addEventListener("loadedmetadata", () => {
@@ -149,7 +209,11 @@ class Webcast extends Component {
                         sharevideo.play();
                     });
                 }
-            }).then(this.setpeeropen(sharevideo))
+            }, (reason) => {
+                console.log("get user media rejected : ", reason);
+            }).then(this.setpeeropen(sharevideo), (reason) => {
+                console.log("get user media rejected 2 : ", reason);
+            })
             .catch(function (err) {
                 console.log("Something went wrong!: ", err);
             });
@@ -159,7 +223,7 @@ class Webcast extends Component {
             console.log('peer connection error', err);
             this.myPeer.reconnect();
         })
-/*
+        /*
         const text = document.querySelector("#text");
         text.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && text.value.length !== 0) {
@@ -184,30 +248,55 @@ class Webcast extends Component {
         this.socket.on("getout", () => {
             this.exit();
         });
+
+        if (!this.is_professor) {
+            const textbox = document.querySelector("#textbox");
+            this.socket.on("subtitlemessage", (message) => {
+                textbox.innerHTML = message;
+            });
+        } else {
+            this.getTextbox();
+            setInterval(() => {
+                this.sendsubtitle();
+            }, 2000);
+        }
+        
     }
 
     render() {
+        this.is_professor = false;
+        var ca = document.cookie.split(';');
+        for(var i=0;i < ca.length;i++) {
+            var c = ca[i];
+            while (c.charAt(0)===' ') c = c.substring(1,c.length);
+            if (c.indexOf("usertype=") === 0) {
+                if (c.substring(9) == "Professor") {
+                    this.is_professor = true;
+                }
+            }
+            if (c.indexOf("userid=") === 0) {
+                this.username = c.substring(7);
+            }
+        }
+
         return (
             <div class="continer">
                 <link rel="stylesheet" href="webcast.css" />
                 <script type="text/javascript" src="https://kit.fontawesome.com/c939d0e917.js"></script>
-                <script type="text/javascript" src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script> 
-                <script type="text/javascript" src="Subtitle.js"></script>
                 <div class="main">  
                     <div class="main__left">
                         <div id="sharevideo_cont">
                             <video autoplay="true" id = "sharevideo">
                             </video>
                         </div>
-                        <div id="subtitles">
-        	                <textarea id="textbox" rows="5" cols="100" style="background-color:black;color:white; text-transform:uppercase; font-size:large"> </textarea>
-        	                <button id="sub_start">Show Subtitles</button>
-        	                <button id="sub_stop">Hide Subtitles</button>
-    	                </div>
+                        
                         <div class="options">
                             <div class="options__left">
-                                <div id="showChat" class="options__button">
-                                    <i class="fa fa-comment"></i>
+                                <div id="subtitles">
+                                    {(this.is_professor) ?
+                                        <Subtitle /> : 
+                                        <div id="textbox" class="temp" data-value="1"> </div>
+                                    }
                                 </div>
                             </div>
                             <div class="options__right">

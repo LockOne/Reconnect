@@ -171,6 +171,10 @@ io.on('connection', socket => {
             io.to(roomID).emit("createMessage", message, username);
         });
 
+        socket.on("subtitle", (message) => {
+            io.to(roomID).emit("subtitlemessage", message);
+        });
+
         socket.on("Finish", () => {
             socket.to(roomID).emit("getout");
         })

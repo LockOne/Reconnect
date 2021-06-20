@@ -49,9 +49,7 @@ class Class extends Component {
                 body : {}
             })
             .then((response) => {
-                console.log("res1 : ", response);
                 response.json().then(json => {
-                    console.log("json2 :", json);
                     this.setState({classes : json});
                 });
             })
