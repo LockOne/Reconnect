@@ -17,6 +17,7 @@ class Webcast extends Component {
         this.is_professor = false;
         this.textbox = undefined;
         this.transcript = undefined;
+        this.participants = {};
         this.sendtext = this.sendtext.bind(this);
         this.trycall = this.trycall.bind(this);
         this.setpeeropen = this.setpeeropen.bind(this);
@@ -232,7 +233,7 @@ class Webcast extends Component {
         }
         });*/
 
-        const message_cont = document.querySelector("#meesage_cont");
+        const message_cont = document.querySelector("#message_cont");
 
         this.socket.on("createMessage", (message, userName) => {
             message_cont.innerHTML =
@@ -254,6 +255,16 @@ class Webcast extends Component {
             this.socket.on("subtitlemessage", (message) => {
                 textbox.innerHTML = message;
             });
+
+            setInterval(() => {
+                this.participants[this.username] = "O";
+                this.socket.emit("send-participants", this.username, "O");
+                participants.innerHTML = `<div class="message"> <span>Participants:</span></div>`
+                for (var key in this.participants){
+                    var value = this.participants[key];
+                    participants.innerHTML = participants.innerHTML + `<div class="message"><span>${key}:${value}</span></div>`
+                }
+            }, 2000);
         } else {
             this.getTextbox();
             setInterval(() => {
@@ -261,6 +272,16 @@ class Webcast extends Component {
             }, 2000);
         }
         
+
+        const participants = document.querySelector("#participants_window");
+        this.socket.on("participants", (username, participating) => {
+            this.participants[username] = participating;
+            participants.innerHTML = `<div class="message"> <span>Participants:</span></div>`
+            for (var key in this.participants){
+                var value = this.participants[key];
+                participants.innerHTML = participants.innerHTML + `<div class="message"><span>${key}:${value}</span></div>`
+            }
+        });
     }
 
     render() {
@@ -307,14 +328,18 @@ class Webcast extends Component {
                         </div>
                     </div>
                     <div class="main__right">
-                        <div id="participants"></div>
+                        <div id="participants_window">
+                            <div class="message">
+                                <span>Participants:</span>
+                            </div>
+                        </div>
                         <div id="myvideo_cont">
                             <video autoplay="true" id = "myvideo">
                             </video>
                         </div>
                     </div>
                     <div class="main__right2">
-                        <div class="main__chat_window" id ="meesage_cont">
+                        <div class="main__chat_window" id ="message_cont">
                             <div class="messages">
                             </div>
                         </div>
