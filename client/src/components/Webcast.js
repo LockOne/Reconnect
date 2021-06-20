@@ -24,6 +24,7 @@ class Webcast extends Component {
         this.exit = this.exit.bind(this);
         this.getTextbox = this.getTextbox.bind(this);
         this.sendsubtitle = this.sendsubtitle.bind(this);
+        this.handleKeyPress = this.handleKeyPress.bind(this);
     }
 
     sendsubtitle() {
@@ -148,6 +149,14 @@ class Webcast extends Component {
         }
     }
 
+    handleKeyPress(e) {
+        const chat_message = document.querySelector("#chat_message");
+        if (e.key === "Enter" && chat_message.value.length !== 0) {
+            this.socket.emit("message", chat_message.value, this.username);
+            chat_message.value = "";
+        }
+    }
+
     componentDidMount() {
         this.myPeer = new Peer("", {host: "tester2.kaist.ac.kr", port : "4443"});
 
@@ -224,14 +233,6 @@ class Webcast extends Component {
             console.log('peer connection error', err);
             this.myPeer.reconnect();
         })
-        /*
-        const text = document.querySelector("#text");
-        text.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && text.value.length !== 0) {
-            this.socket.emit("message", text.value);
-            text.value = "";
-        }
-        });*/
 
         const message_cont = document.querySelector("#message_cont");
 
@@ -344,7 +345,7 @@ class Webcast extends Component {
                             </div>
                         </div>
                         <div class="main__message_container">
-                            <input id="chat_message" type="text" autocomplete="off" placeholder="Type message here..."/>
+                            <input id="chat_message" type="text" autocomplete="off" placeholder="Type message here..." onKeyPress={this.handleKeyPress}/>
                             <Button color="primary" onClick={this.sendtext}><i class="fa fa-plus" aria-hidden="true"></i></Button>
                         </div>
                     </div>

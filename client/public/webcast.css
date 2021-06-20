@@ -63,6 +63,7 @@
   width: 100%;
   overflow-y: scroll;
   flex-direction: column;
+  padding : 1px;
 }
 
 #participants_window::-webkit-scrollbar {
@@ -151,6 +152,7 @@
 .main__chat_window {
   flex-grow: 1;
   overflow-y: scroll;
+  padding : 1px;
 }
 
 .main__chat_window::-webkit-scrollbar {
