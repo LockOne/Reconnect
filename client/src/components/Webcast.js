@@ -5,19 +5,27 @@ import io from "socket.io-client";
 import { withRouter } from 'react-router';
 import Subtitle from "./Subtitle.js";
 
+import * as faceapi from 'face-api.js';
+
 class Webcast extends Component {
     constructor(props) {
         super(props);
         this.myPeer = undefined;
         this.socket = undefined;
         this.main_peer_id = "";
-        this.streaming = false;
         this.username  = "";
         this.myVideoStream = undefined;
         this.is_professor = false;
         this.textbox = undefined;
         this.transcript = undefined;
         this.participants = {};
+        this.face_interval = undefined;
+        this.state = {
+            fullDesc: null,
+            detections: null,
+            descriptors: null,
+            facingMode: null
+        };
         this.sendtext = this.sendtext.bind(this);
         this.trycall = this.trycall.bind(this);
         this.setpeeropen = this.setpeeropen.bind(this);
@@ -25,6 +33,70 @@ class Webcast extends Component {
         this.getTextbox = this.getTextbox.bind(this);
         this.sendsubtitle = this.sendsubtitle.bind(this);
         this.handleKeyPress = this.handleKeyPress.bind(this);
+        this.swapscreen = this.swapscreen.bind(this);
+        this.loadModels = this.loadModels.bind(this);
+        this.capture = this.capture.bind(this);
+        this.getFullFaceDescription = this.getFullFaceDescription.bind(this);
+    }
+
+    swapscreen() {
+    }
+
+    async loadModels() {
+        const MODEL_URL = '/models';
+        await faceapi.loadTinyFaceDetectorModel(MODEL_URL);
+        await faceapi.loadFaceLandmarkTinyModel(MODEL_URL);
+        await faceapi.loadFaceRecognitionModel(MODEL_URL);
+    }
+
+    async capture () {
+        if (this.myVideoStream) {
+        const canvas = document.createElement("canvas");
+        // scale the canvas accordingly
+        canvas.width = this.myVideoStream.videoWidth;
+        canvas.height = this.myVideoStream.videoHeight;
+        // draw the video at that frame
+        canvas.getContext('2d')
+        .drawImage(this.myVideoStream, 0, 0, canvas.width, canvas.height);
+        // convert it to a usable data URL
+        const image = new Image()
+        image.src = canvas.toDataURL();
+        
+          await this.getFullFaceDescription(
+            image,
+            160
+          ).then(fullDesc => {
+            if (!!fullDesc) {
+              this.setState({
+                detections: fullDesc.map(fd => fd.detection),
+                descriptors: fullDesc.map(fd => fd.descriptor)
+              });
+              console.log("capture : ", this.state.detections);
+              console.log("capture 2 : ", this.state.descriptors);
+            }
+          });
+        }
+    };
+
+    async getFullFaceDescription(blob, inputSize = 512) {
+        // tiny_face_detector options
+        let scoreThreshold = 0.5;
+        const OPTION = new faceapi.TinyFaceDetectorOptions({
+          inputSize,
+          scoreThreshold
+        });
+        const useTinyModel = true;
+      
+        // fetch image to api
+        let img = await faceapi.fetchImage(blob);
+      
+        // detect all faces and generate full description from image
+        // including landmark and descriptor of each face
+        let fullDesc = await faceapi
+          .detectAllFaces(img, OPTION)
+          .withFaceLandmarks(useTinyModel)
+          .withFaceDescriptors();
+        return fullDesc;
     }
 
     sendsubtitle() {
@@ -223,7 +295,14 @@ class Webcast extends Component {
                 console.log("get user media rejected : ", reason);
             }).then(this.setpeeropen(sharevideo), (reason) => {
                 console.log("get user media rejected 2 : ", reason);
-            })
+            }).then(this.loadModels())
+            .then(
+                () => {
+                    temp_a.face_interval = setInterval(() => {
+                        temp_a.capture();
+                    },2000);
+                }
+            )
             .catch(function (err) {
                 console.log("Something went wrong!: ", err);
             });

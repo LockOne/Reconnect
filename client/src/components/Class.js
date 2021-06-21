@@ -80,6 +80,7 @@ class Class extends Component {
                             <CardText>
                                 { c.description }
                             </CardText>
+                            <Link to={`/classes/${c.id}`} className="btn btn-primary">Take class</Link>
                         </Card>
                 </div>
             )
