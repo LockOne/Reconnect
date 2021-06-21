@@ -20,8 +20,8 @@ class Webcast extends Component {
         this.transcript = undefined;
         this.participants = {};
         this.face_interval = undefined;
+        this.sendsubtitle_interval = undefined;
         this.state = {
-            fullDesc: null,
             detections: null,
             descriptors: null,
             facingMode: null
@@ -51,28 +51,33 @@ class Webcast extends Component {
 
     async capture () {
         if (this.myVideoStream) {
-        const canvas = document.createElement("canvas");
-        // scale the canvas accordingly
-        canvas.width = this.myVideoStream.videoWidth;
-        canvas.height = this.myVideoStream.videoHeight;
-        // draw the video at that frame
-        canvas.getContext('2d')
-        .drawImage(this.myVideoStream, 0, 0, canvas.width, canvas.height);
-        // convert it to a usable data URL
-        const image = new Image()
-        image.src = canvas.toDataURL();
+        const myvideo = document.querySelector("#myvideo");
+        const canvas = document.createElement('canvas');
+        canvas.width = myvideo.videoWidth;
+        canvas.height = myvideo.videoHeight;
+        canvas.getContext('2d').drawImage(myvideo, 0, 0);
+        const data = canvas.toDataURL('image/jpeg', 0.8);
         
           await this.getFullFaceDescription(
-            image,
+            data,
             160
           ).then(fullDesc => {
             if (!!fullDesc) {
               this.setState({
                 detections: fullDesc.map(fd => fd.detection),
-                descriptors: fullDesc.map(fd => fd.descriptor)
               });
-              console.log("capture : ", this.state.detections);
-              console.log("capture 2 : ", this.state.descriptors);
+              //console.log("capture : ", this.state.detections);
+              const participating = (this.state.detections.length != 0) ?
+                "O": "X";
+              console.log("participaitng : ", participating);
+              const participants = document.querySelector("#participants_window");
+              this.participants[this.username] = participating;
+              this.socket.emit("send-participants", this.username, participating);
+                participants.innerHTML = `<div class="message"> <span>Participants:</span></div>`
+                for (var key in this.participants){
+                    var value = this.participants[key];
+                    participants.innerHTML = participants.innerHTML + `<div class="message"><span>${key}:${value}</span></div>`
+                }
             }
           });
         }
@@ -298,9 +303,11 @@ class Webcast extends Component {
             }).then(this.loadModels())
             .then(
                 () => {
-                    temp_a.face_interval = setInterval(() => {
-                        temp_a.capture();
-                    },2000);
+                    if (!temp_a.is_professor) {
+                        temp_a.face_interval = setInterval(() => {
+                            temp_a.capture();
+                        },2000);
+                    }
                 }
             )
             .catch(function (err) {
@@ -336,18 +343,10 @@ class Webcast extends Component {
                 textbox.innerHTML = message;
             });
 
-            setInterval(() => {
-                this.participants[this.username] = "O";
-                this.socket.emit("send-participants", this.username, "O");
-                participants.innerHTML = `<div class="message"> <span>Participants:</span></div>`
-                for (var key in this.participants){
-                    var value = this.participants[key];
-                    participants.innerHTML = participants.innerHTML + `<div class="message"><span>${key}:${value}</span></div>`
-                }
-            }, 2000);
+            this.participants[this.username] = "O";
         } else {
             this.getTextbox();
-            setInterval(() => {
+            this.sendsubtitle_interval = setInterval(() => {
                 this.sendsubtitle();
             }, 2000);
         }
@@ -362,6 +361,18 @@ class Webcast extends Component {
                 participants.innerHTML = participants.innerHTML + `<div class="message"><span>${key}:${value}</span></div>`
             }
         });
+    }
+
+    componentWillUnmount() { 
+        if (this.face_interval != undefined) {
+            clearInterval(this.face_interval);
+            this.face_interval = undefined;
+        }
+
+        if (this.sendsubtitle_interval != undefined) {
+            clearInterval(this.sendsubtitle_interval);
+            this.sendsubtitle_interval = undefined;
+        }
     }
 
     render() {
