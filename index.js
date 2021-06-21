@@ -43,52 +43,6 @@ var controller_main = require("./server/login-controller");
 var Participate = require("./server/Participate");
 var Class = require("./server/Class");
 
-app.route("/removeallpart").post(async function(req, res) {
-    var result = await Participate.deleteMany({}).exec();
-    console.log("removed ", result.deletedCount);
-});
-
-app.route("/updateparticipate").post(async function(req,res){ 
-    
-    var userid = req.body.userid;
-    var participating = req.body.participating;
-
-    let findone = await Participate.findOne({userid : userid}).exec();
-
-    if (findone != null) {
-        Participate.updateOne({userid : userid}, {userid : userid, participating : participating})
-        .then(result => {
-            const { matchedCount, modifiedCount } = result;
-            if(matchedCount && modifiedCount) {
-                console.log(`Successfully added a new review.`)
-            }
-        })
-        .catch(err => console.error(`Failed to add review: ${err}`))
-    } else {
-        Participate.create({userid : userid, participating : participating},
-            function(err, user) {
-                console.log("err : ", err);
-        });
-    }
-});
-
-app.route("/getparticipate").post(async function(req,res){ 
-    let cursor = await Participate.find({}).exec();
-    var result = {};
-    result.data = [];
-
-    cursor.forEach(doc => {
-        var tmp = {};
-        tmp.userid = doc.userid;
-        tmp.participating = doc.participating;
-        result.data.push(tmp);
-    });
-
-    console.log("result : ", result);
-    
-    res.send(result);
-});
-
 app.route("/login").post(async function(req,res){ 
     var result = await controller_main.SignIn(req, res);
     console.log("sending result : ", result);
@@ -113,10 +67,7 @@ app.route("/getclasses").post(async function (req,res) {
         tmp.image = doc.image;
         tmp.description = doc.description;
         result.push(tmp);
-    });
-
-    console.log("result : ", result);
-    
+    });    
     res.send(result);
 });
 

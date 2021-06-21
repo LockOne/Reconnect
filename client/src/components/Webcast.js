@@ -119,10 +119,19 @@ class Webcast extends Component {
         }
         if (this.myPeer != undefined) {
             this.myPeer.disconnect();
+            this.myPeer = undefined;
         }
         if (this.socket != undefined) {
             this.socket.close();
+            this.socket = undefined;
         }
+
+        if (this.myVideoStream != undefined) {
+            this.myVideoStream.getTracks().forEach(function(track) {
+                track.stop();
+            });
+            this.myVideoStream = undefined;
+        } 
         this.props.history.push('/classes');
     }
 
@@ -373,6 +382,23 @@ class Webcast extends Component {
             clearInterval(this.sendsubtitle_interval);
             this.sendsubtitle_interval = undefined;
         }
+
+        if (this.myPeer != undefined) {
+            this.myPeer.disconnect();
+            this.myPeer = undefined;
+        }
+
+        if (this.socket != undefined) {
+            this.socket.close();
+            this.myPeer = undefined;
+        }
+
+        if (this.myVideoStream != undefined) {
+            this.myVideoStream.getTracks().forEach(function(track) {
+                track.stop();
+            });
+            this.myVideoStream = undefined;
+        } 
     }
 
     render() {
